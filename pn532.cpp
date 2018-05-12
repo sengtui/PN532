@@ -161,10 +161,9 @@ bool PN532::ListPassiveTarget(bool isLog)
 int PN532::Query(char* cmd, int cmdLen, bool isLog)
 {
     unsigned char txLEN, txLCS, txCHK;
-    char c;
     int ret;
 
-    c =0;
+    char c =0;
     for(int i=0;i<cmdLen;i++){
         c+= cmd[i];
     }
@@ -201,12 +200,12 @@ int PN532::rawCommand(int txLen, bool isLog)
     int ret, remain;
     int LEN, LCS, CMD;
     
-    char NACK[] ={0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00};
-    char ACK[]={0x00, 0x00, 0xFF, 0x00, 0xFF, 0x00};
+    char NACK[] = { 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00 };
+    char ACK[] = { 0x00, 0x00, 0xFF, 0x00, 0xFF, 0x00 };
  
     try{
     // Send Command
-        if(isLog) printHEX("TX", (char*)txStr, txLen);
+        if(isLog) printHEX("TX", txStr, txLen);
         dev->write((char*)txStr, txLen);
     // Wait for PN532 to settle down, >5mS , very very important, otherwise PN532 go crazy and start to lost sync of reply...
         usleep(10000);
@@ -251,6 +250,7 @@ int PN532::rawCommand(int txLen, bool isLog)
         if((LEN+LCS)!=0){
             fprintf(stderr, "Paragraph LEN %d does not match to LCS %d, reset peer\n", LEN, LCS);
             dev->write(ACK, 6);
+            usleep(500000);
             return 0;
         }
         
