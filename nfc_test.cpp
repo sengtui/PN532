@@ -10,19 +10,18 @@ main()
     int i=0;
     reader = new PN532("/dev/ttyS1");
     reader->wakeUp();
-    reader->RFConfiguration();
-    reader->GetFirmwareVersion();
-    reader->GetGeneralStatus();
+    reader->RFConfiguration(false);
+    reader->GetFirmwareVersion(false);
+    reader->GetGeneralStatus(false);
           
-        if(reader->ListPassiveTarget()){
-            reader->auth();
+        if(reader->ListPassiveTarget(false)){
+            reader->auth(false);
         }
-        fprintf(stderr,"<<<<%d>>>>\n",i);
+        fprintf(stderr,"Type your command:\n");
     do{
         bytes=0;
          do{
             scanf("%s", buf);
-            fprintf(stderr, "Get: [%s]\n", buf);
             len = strlen(buf);
             buf[len]=0;
             if(len>2) {
@@ -31,7 +30,7 @@ main()
                 bytes++;
             }
         } while (len>2);
-        printHEX("BYTES", cmd, bytes);
+        printHEX("COMMAND", cmd, bytes);
         reader->Query(cmd, bytes, true);   
         usleep(100000);
     } while (i++<1000);

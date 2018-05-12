@@ -14,11 +14,11 @@ class PN532 {
   public:
       PN532(const char* ttyS);
       bool wakeUp();
-      bool auth();
-      bool RFConfiguration(void);
-      bool GetFirmwareVersion(void);
-      bool GetGeneralStatus(void);
-      bool ListPassiveTarget(void);
+      bool auth(bool isLog);
+      bool RFConfiguration(bool isLog);
+      bool GetFirmwareVersion(bool isLog);
+      bool GetGeneralStatus(bool isLog);
+      bool ListPassiveTarget(bool isLog);
       int Query(char* cmd, int txLen, bool isLog);
       
     

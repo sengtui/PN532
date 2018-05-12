@@ -3,6 +3,7 @@
 
 using namespace std;
 
+// This is a common routine to display a HEX string with it's name and length
 void printHEX(const char* topic, char* str, int len)
 {
 
@@ -15,7 +16,7 @@ void printHEX(const char* topic, char* str, int len)
   fprintf(stderr, "\n");
 }
 
-
+// Constructor
 PN532::PN532(const char* ttyS){
 
     dev = new mraa::Uart(ttyS);
@@ -28,6 +29,7 @@ PN532::PN532(const char* ttyS){
     dev->setTimeout(44,44,44);
 }
 
+// Destructor
 PN532::~PN532(){
     delete dev;
 }
@@ -35,8 +37,6 @@ PN532::~PN532(){
 // Wake up sequence: 0x55 0x55 + lot of 0x00 until it awake.
 // Then send 0x00 0x00 0xff 0x03 0xfd to notify 3 bytes command:
 // 0xD4 0x14 0x01  (SamConfigue: Normal mode, timeout=50ms)
-// Then [DCS][00] 0x17 0x00 
-// Where [DCS]+ 0xD4 + 0x14 + 0x01 = 0x00
 bool PN532::wakeUp()
 {
     int ret;
@@ -55,25 +55,28 @@ bool PN532::wakeUp()
     return ret;
 }
 
-bool PN532::RFConfiguration(void)
+// Setup RF parameters
+// D4 32 05 02 01 40(RF_Retry)
+// RF_Retry: 0xFF infinite, 0x00 No retry. Suggest > 0x20
+bool PN532::RFConfiguration(bool isLog)
 {
     int ret;
     char RFCFG[]={ 0xD4, 0x32, 0x05, 0x02, 0x01, 0x40 };
 
     cout<<"Configure RF parameters..." <<endl;
-    ret = Query(RFCFG, 6, false);
+    ret = Query(RFCFG, 6, isLog);
     return true;
 }
-// GerFirmwareVersion: 0xD4 0x02 
-// Then [DCS] 0x2A 
-// Where [DCS] = 0x100 - 0xD4 - 0x02
-bool PN532::GetFirmwareVersion(void)
+
+// GerFirmwareVersion: D4 02 
+// Output: D4 03 XX YY ZZ
+bool PN532::GetFirmwareVersion(bool isLog)
 {
     int ret;
     
     char cmd[] ={ 0xD4, 0x02 };
     cout<<"GetFirmwareVersion..."<<endl;
-    ret = Query(cmd, 2, false);
+    ret = Query(cmd, 2, isLog);
     info_IC = Reply[2];
     info_Ver= Reply[3];
     info_Rev= Reply[4];
@@ -84,9 +87,10 @@ bool PN532::GetFirmwareVersion(void)
     if(info_Support|4) cout << "Supported: ISO18092\n";
     return true;
 }
-// GerGeneralStatus: 0xD4 0x04 
-// Where [DCS] = 0x100 - 0xD4 - 0x04
-bool PN532::GetGeneralStatus(void)
+
+// GerGeneralStatus: D4 04
+// Outp0ut: D4 05 XX YY ZZ
+bool PN532::GetGeneralStatus(bool isLog)
 {
     int ret;
     
@@ -98,7 +102,10 @@ bool PN532::GetGeneralStatus(void)
     return true;
 }
 
-bool PN532::auth(void)
+
+// Auth: D4 40 01 AUTH(0x60) 07 KEY[6] UID[4]
+// Usually factory default key is 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF
+bool PN532::auth(bool isLog)
 {
     int ret;
     
@@ -107,15 +114,15 @@ bool PN532::auth(void)
     cout<<"Authencate..."<<endl;
     for(int i=0;i<4;i++) cmd[i+11]=UID[i];
 
-    ret = Query(cmd, 15, true);
+    ret = Query(cmd, 15, isLog);
     printHEX("Status", Reply, ret);
  
     return true;
 }
 
-// ListPassiveTarget: 0xD4 0x4A 0X02 0X00
-// Where [DCS] = 0x100 - 0xD4 - 0x04
-bool PN532::ListPassiveTarget(void)
+// ListPassiveTarget: D4 4A NumCards(02) 106k_Mifare(00)
+// Outpout: D4 4B xxxxxx
+bool PN532::ListPassiveTarget(bool isLog)
 {
     int ret;
     int NbTg;
@@ -125,7 +132,7 @@ bool PN532::ListPassiveTarget(void)
     };
     
     cout<<"ListPassiveTarget..."<<endl;
-    ret = Query(cmd, 4, true);
+    ret = Query(cmd, 4, isLog);
     NbTg = rxStr[7];
     if((NbTg == 0) || (ret==0)) {
         cout<<"No card listed"<<endl;
@@ -141,6 +148,7 @@ bool PN532::ListPassiveTarget(void)
 
     return true;
 }
+
 /* Query wraps the PN532 command to txString in following spec:
    0x00 0x00 0xFF LEN LCS CMD VAR1 VAR2 ....VARn CHK 0x00
    head = 0x00 0x00 0xFF
