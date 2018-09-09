@@ -15,6 +15,7 @@ void printHEX(const char* topic, char* str, int len)
   for(int i = 0; i< len; i++) fprintf(stderr, "%02X ", (unsigned char)str[i]);
   fprintf(stderr, "\n");
 }
+void printHEX(const char* topic, unsigned char* str, int len) { printHEX(topic, (char*)str, len);}
 
 // Constructor
 PN532::PN532(const char* ttyS){

@@ -10,7 +10,7 @@
 
 void printHEX(const char* topic, char* str, int len);
 // Override for unsigned char* string
-void printHEX(const char* topic, unsigned char* str, int len) { printHEX(topic, str, len);}
+void printHEX(const char* topic, unsigned char* str, int len);
 
 class PN532 {
   public:
